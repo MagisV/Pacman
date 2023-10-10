@@ -67,18 +67,52 @@ class CornerSeekingAgent(Agent):
         non_visited_corners = set(api.corners(state)) - self.visited_corners
         if not self.curr_path: # choose a new corner and compute path
             corner = random.choice(list(non_visited_corners))
-            print("corner: ", corner)
             self.visited_corners.add(corner)
             to_x, to_y = get_non_wall_corner(corner)
             path = deque(find_path_to_point(pacman[0], pacman[1], to_x, to_y, walls, state))
             self.curr_path = path
         
         direction = self.curr_path.popleft()[2]
-        print("direction: ", direction)
-
-        # self.visited.add(pacman)
 
         return direction
+
+
+class EatingAllAgent(Agent):
+    
+    def __init__(self):
+        self.map_visited = {}
+        self.curr_path = deque()
+
+    def getAction(self, state):
+        if not self.map_visited:
+            all_non_wall_points = get_all_non_wall_points(state)
+            for point in all_non_wall_points:
+                self.map_visited[point] = False
+
+        pacman = api.whereAmI(state)
+        self.map_visited[pacman] = True
+        walls = api.walls(state)
+        non_visited_coordinates = [c for c in self.map_visited.items() if c[1] is False]
+        if not self.curr_path: # choose a new corner and compute path
+            coordinate_to_visit = random.choice(non_visited_coordinates)
+            to_x, to_y = coordinate_to_visit[0][0], coordinate_to_visit[0][1]
+            path = deque(find_path_to_point(pacman[0], pacman[1], to_x, to_y, walls, state))
+            self.curr_path = path
+        
+        direction = self.curr_path.popleft()[2]
+        return direction
+
+def get_all_non_wall_points(state):
+    walls = api.walls(state)
+    width = state.getWalls().width
+    height = state.getWalls().height
+    all_non_wall_points = set()
+    for x in range(width):
+        for y in range(height):
+            if (x, y) not in walls:
+                all_non_wall_points.add((x, y))
+    return all_non_wall_points
+    
 
 def get_non_wall_corner(corner):
     x = corner[0]
